@@ -59,6 +59,22 @@
       <label>Exposure</label>
       <input type="range" id="exposure" min="-100" max="100" value="0" />
     </div>
+    <div class="control-group">
+      <label>Highlights</label>
+      <input type="range" id="highlights" min="-100" max="100" value="0" />
+    </div>
+    <div class="control-group">
+      <label>Shadows</label>
+      <input type="range" id="shadows" min="-100" max="100" value="0" />
+    </div>
+    <div class="control-group">
+      <label>Whites</label>
+      <input type="range" id="whites" min="-100" max="100" value="0" />
+    </div>
+    <div class="control-group">
+      <label>Blacks</label>
+      <input type="range" id="blacks" min="-100" max="100" value="0" />
+    </div>
     <div class="tone-curve">
       <label>Tone Curve (Luminance)</label>
       <canvas id="curveCanvas" width="256" height="256"></canvas>
@@ -85,7 +101,6 @@
 
     function drawCurve() {
       curveCtx.clearRect(0, 0, 256, 256);
-      // Draw background grid
       curveCtx.strokeStyle = '#eee';
       for (let i = 0; i <= 256; i += 64) {
         curveCtx.beginPath();
@@ -97,7 +112,6 @@
         curveCtx.lineTo(256, i);
         curveCtx.stroke();
       }
-      // Draw curve
       curveCtx.beginPath();
       curveCtx.moveTo(curvePoints[0][0], curvePoints[0][1]);
       for (let i = 1; i < curvePoints.length; i++) {
@@ -106,8 +120,6 @@
       curveCtx.strokeStyle = '#000';
       curveCtx.lineWidth = 2;
       curveCtx.stroke();
-
-      // Draw control points
       curveCtx.fillStyle = '#f00';
       for (const [x, y] of curvePoints) {
         curveCtx.beginPath();
@@ -205,13 +217,17 @@
       link.click();
     }
 
-    ['brightness', 'contrast', 'exposure'].forEach(id => document.getElementById(id).addEventListener('input', applyEdits));
+    ['brightness', 'contrast', 'exposure', 'highlights', 'shadows', 'whites', 'blacks'].forEach(id => document.getElementById(id).addEventListener('input', applyEdits));
 
     function applyEdits() {
       if (!originalImage) return;
       const brightness = parseInt(document.getElementById('brightness').value);
       const contrast = parseInt(document.getElementById('contrast').value);
       const exposure = parseInt(document.getElementById('exposure').value);
+      const highlights = parseInt(document.getElementById('highlights').value);
+      const shadows = parseInt(document.getElementById('shadows').value);
+      const whites = parseInt(document.getElementById('whites').value);
+      const blacks = parseInt(document.getElementById('blacks').value);
 
       const curveMap = getLuminanceCurveMap();
 
@@ -222,6 +238,28 @@
         let r = data[i];
         let g = data[i + 1];
         let b = data[i + 2];
+
+        let avg = (r + g + b) / 3;
+
+        // Highlight & shadow adjustments
+        if (avg > 200) {
+          r += highlights;
+          g += highlights;
+          b += highlights;
+        } else if (avg < 55) {
+          r += shadows;
+          g += shadows;
+          b += shadows;
+        }
+
+        // Whites & blacks adjustments
+        r = r < 30 ? r + blacks : r;
+        g = g < 30 ? g + blacks : g;
+        b = b < 30 ? b + blacks : b;
+
+        r = r > 225 ? r + whites : r;
+        g = g > 225 ? g + whites : g;
+        b = b > 225 ? b + whites : b;
 
         [r, g, b] = [r + brightness, g + brightness, b + brightness];
         [r, g, b] = [r, g, b].map(val => (val - 128) * (contrast / 100 + 1) + 128);
