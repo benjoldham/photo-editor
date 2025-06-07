@@ -37,6 +37,7 @@
       border: 1px solid #aaa;
       margin-top: 10px;
       cursor: crosshair;
+      background-color: #fff;
     }
   </style>
 </head>
@@ -84,15 +85,33 @@
 
     function drawCurve() {
       curveCtx.clearRect(0, 0, 256, 256);
+      // Draw background grid
+      curveCtx.strokeStyle = '#eee';
+      for (let i = 0; i <= 256; i += 64) {
+        curveCtx.beginPath();
+        curveCtx.moveTo(i, 0);
+        curveCtx.lineTo(i, 256);
+        curveCtx.stroke();
+        curveCtx.beginPath();
+        curveCtx.moveTo(0, i);
+        curveCtx.lineTo(256, i);
+        curveCtx.stroke();
+      }
+      // Draw curve
       curveCtx.beginPath();
       curveCtx.moveTo(curvePoints[0][0], curvePoints[0][1]);
       for (let i = 1; i < curvePoints.length; i++) {
         curveCtx.lineTo(curvePoints[i][0], curvePoints[i][1]);
       }
+      curveCtx.strokeStyle = '#000';
+      curveCtx.lineWidth = 2;
       curveCtx.stroke();
+
+      // Draw control points
+      curveCtx.fillStyle = '#f00';
       for (const [x, y] of curvePoints) {
         curveCtx.beginPath();
-        curveCtx.arc(x, y, 4, 0, 2 * Math.PI);
+        curveCtx.arc(x, y, 5, 0, Math.PI * 2);
         curveCtx.fill();
       }
     }
@@ -160,10 +179,14 @@
       ctx.drawImage(image, 0, 0);
       originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
       drawCurve();
+      applyEdits();
     };
 
     function resetEdits() {
-      if (originalImage) ctx.putImageData(originalImage, 0, 0);
+      if (originalImage) {
+        ctx.putImageData(originalImage, 0, 0);
+        drawCurve();
+      }
     }
 
     function toggleBeforeAfter() {
@@ -171,6 +194,7 @@
         const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
         ctx.putImageData(originalImage, 0, 0);
         originalImage = current;
+        drawCurve();
       }
     }
 
