@@ -56,6 +56,7 @@
     <div class="control-group"><label>Shadows</label><input type="range" id="shadows" min="-100" max="100" value="0"></div>
     <div class="control-group"><label>Whites</label><input type="range" id="whites" min="-100" max="100" value="0"></div>
     <div class="control-group"><label>Blacks</label><input type="range" id="blacks" min="-100" max="100" value="0"></div>
+    <div class="control-group"><label>Vibrance</label><input type="range" id="vibrance" min="-100" max="100" value="0"></div>
     <div class="tone-curve">
       <label>Tone Curve (Luminance)</label>
       <canvas id="curveCanvas" width="256" height="256"></canvas>
@@ -70,251 +71,27 @@
   </div>
 
   <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const upload = document.getElementById('upload');
-    let originalImage = null;
-let fullResImage = null;
-let image = new Image();
-
-    const curveCanvas = document.getElementById('curveCanvas');
-    const curveCtx = curveCanvas.getContext('2d');
-    const curvePoints = Array.from({ length: 5 }, (_, i) => [i * 64, 256 - i * 64]);
-
-    function drawCurve() {
-      curveCtx.clearRect(0, 0, 256, 256);
-      curveCtx.strokeStyle = '#eee';
-      for (let i = 0; i <= 256; i += 64) {
-        curveCtx.beginPath();
-        curveCtx.moveTo(i, 0);
-        curveCtx.lineTo(i, 256);
-        curveCtx.stroke();
-        curveCtx.beginPath();
-        curveCtx.moveTo(0, i);
-        curveCtx.lineTo(256, i);
-        curveCtx.stroke();
-      }
-      curveCtx.beginPath();
-      curveCtx.moveTo(curvePoints[0][0], curvePoints[0][1]);
-      for (let i = 1; i < curvePoints.length; i++) {
-        curveCtx.lineTo(curvePoints[i][0], curvePoints[i][1]);
-      }
-      curveCtx.strokeStyle = '#000';
-      curveCtx.lineWidth = 2;
-      curveCtx.stroke();
-      curveCtx.fillStyle = '#f00';
-      for (const [x, y] of curvePoints) {
-        curveCtx.beginPath();
-        curveCtx.arc(x, y, 5, 0, Math.PI * 2);
-        curveCtx.fill();
-      }
-    }
-
-    let draggingPoint = null;
-    curveCanvas.addEventListener('mousedown', (e) => {
-      const rect = curveCanvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      for (let i = 0; i < curvePoints.length; i++) {
-        const [px, py] = curvePoints[i];
-        if (Math.hypot(x - px, y - py) < 8) {
-          draggingPoint = i;
-          break;
-        }
-      }
-    });
-    curveCanvas.addEventListener('mousemove', (e) => {
-      if (draggingPoint !== null) {
-        const rect = curveCanvas.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-        x = Math.max(0, Math.min(255, x));
-        y = Math.max(0, Math.min(255, y));
-        curvePoints[draggingPoint][1] = y;
-        drawCurve();
-        applyEdits();
-      }
-    });
-    curveCanvas.addEventListener('mouseup', () => draggingPoint = null);
-    curveCanvas.addEventListener('mouseleave', () => draggingPoint = null);
-
-    function getLuminanceCurveMap() {
-      const map = new Uint8ClampedArray(256);
-      for (let i = 0; i < 256; i++) {
-        const x = i;
-        let y = x;
-        for (let j = 1; j < curvePoints.length; j++) {
-          const [x1, y1] = curvePoints[j - 1];
-          const [x2, y2] = curvePoints[j];
-          if (x >= x1 && x <= x2) {
-            const t = (x - x1) / (x2 - x1);
-            y = (1 - t) * y1 + t * y2;
-            break;
-          }
-        }
-        map[i] = 255 - Math.round(y);
-      }
-      return map;
-    }
-
-    upload.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        fullResImage = new Image();
-        fullResImage.onload = function () {
-          const scale = 300 / fullResImage.width;
-          canvas.width = 300;
-          canvas.height = fullResImage.height * scale;
-          ctx.drawImage(fullResImage, 0, 0, canvas.width, canvas.height);
-          originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          drawCurve();
-          applyEdits();
-        };
-        fullResImage.src = event.target.result;
-        image.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    image.onload = function () {
-      const scale = 300 / image.width;
-      canvas.width = 300;
-      canvas.height = image.height * scale;
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      drawCurve();
-      applyEdits();
-    };
-
-    function resetEdits() {
-      if (originalImage) {
-        ctx.putImageData(originalImage, 0, 0);
-        drawCurve();
-      }
-    }
-
-    function toggleBeforeAfter() {
-      if (originalImage) {
-        const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        ctx.putImageData(originalImage, 0, 0);
-        originalImage = current;
-        drawCurve();
-      }
-    }
-
-    function exportImage(type) {
-      if (!fullResImage) return;
-
-      const exportCanvas = document.createElement('canvas');
-      const exportCtx = exportCanvas.getContext('2d');
-      exportCanvas.width = fullResImage.width;
-      exportCanvas.height = fullResImage.height;
-      exportCtx.drawImage(fullResImage, 0, 0);
-
-      const imageData = exportCtx.getImageData(0, 0, exportCanvas.width, exportCanvas.height);
-      const data = imageData.data;
-
-      const brightness = +document.getElementById('brightness').value;
-      const contrast = +document.getElementById('contrast').value;
-      const exposure = +document.getElementById('exposure').value;
-      const highlights = +document.getElementById('highlights').value;
-      const shadows = +document.getElementById('shadows').value;
-      const whites = +document.getElementById('whites').value;
-      const blacks = +document.getElementById('blacks').value;
-
-      for (let i = 0; i < data.length; i += 4) {
-        let [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-        const avg = (r + g + b) / 3;
-
-        if (avg > 200) [r, g, b] = [r + highlights, g + highlights, b + highlights];
-        if (avg < 55) [r, g, b] = [r + shadows, g + shadows, b + shadows];
-
-        r = r > 225 ? r + whites : r;
-        g = g > 225 ? g + whites : g;
-        b = b > 225 ? b + whites : b;
-
-        r = r < 30 ? r + blacks : r;
-        g = g < 30 ? g + blacks : g;
-        b = b < 30 ? b + blacks : b;
-
-        [r, g, b] = [r + brightness, g + brightness, b + brightness];
-        [r, g, b] = [r, g, b].map(v => (v - 128) * (contrast / 100 + 1) + 128);
-        [r, g, b] = [r + exposure, g + exposure, b + exposure];
-
-        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        const scale = lum > 0 ? 128 / lum : 1;
-
-        data[i] = Math.min(255, Math.max(0, r * scale));
-        data[i + 1] = Math.min(255, Math.max(0, g * scale));
-        data[i + 2] = Math.min(255, Math.max(0, b * scale));
-      }
-
-      exportCtx.putImageData(imageData, 0, 0);
-      const link = document.createElement('a');
-      link.download = `edited-image.${type}`;
-      link.href = exportCanvas.toDataURL(`image/${type}`);
-      link.click();
-    }
-    }
-
-    let debounceTimer;
-    function debounceApplyEdits() {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(applyEdits, 50);
-    }
-
+    // ADD THIS to input bindings
     [
       'brightness', 'contrast', 'exposure',
-      'highlights', 'shadows', 'whites', 'blacks'
+      'highlights', 'shadows', 'whites', 'blacks', 'vibrance'
     ].forEach(id => document.getElementById(id).addEventListener('input', debounceApplyEdits));
 
-    function applyEdits() {
-      if (!originalImage) return;
+    // INSIDE applyEdits() and exportImage(), after exposure:
+    const vibrance = +document.getElementById('vibrance').value;
 
-      const brightness = +document.getElementById('brightness').value;
-      const contrast = +document.getElementById('contrast').value;
-      const exposure = +document.getElementById('exposure').value;
-      const highlights = +document.getElementById('highlights').value;
-      const shadows = +document.getElementById('shadows').value;
-      const whites = +document.getElementById('whites').value;
-      const blacks = +document.getElementById('blacks').value;
+    // THEN add this after RGB adjustments
+    const intensity = (r + g + b) / 3;
+    const maxColor = Math.max(r, g, b);
+    const vibranceFactor = (maxColor - intensity) / 255;
+    const vibranceBoost = vibrance * vibranceFactor / 100;
+    r += (r - intensity) * vibranceBoost;
+    g += (g - intensity) * vibranceBoost;
+    b += (b - intensity) * vibranceBoost;
 
-      const curveMap = getLuminanceCurveMap();
-      const data = new Uint8ClampedArray(originalImage.data);
-
-      for (let i = 0; i < data.length; i += 4) {
-        let [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-        const avg = (r + g + b) / 3;
-
-        if (avg > 200) [r, g, b] = [r + highlights, g + highlights, b + highlights];
-        if (avg < 55) [r, g, b] = [r + shadows, g + shadows, b + shadows];
-
-        r = r > 225 ? r + whites : r;
-        g = g > 225 ? g + whites : g;
-        b = b > 225 ? b + whites : b;
-
-        r = r < 30 ? r + blacks : r;
-        g = g < 30 ? g + blacks : g;
-        b = b < 30 ? b + blacks : b;
-
-        [r, g, b] = [r + brightness, g + brightness, b + brightness];
-        [r, g, b] = [r, g, b].map(v => (v - 128) * (contrast / 100 + 1) + 128);
-        [r, g, b] = [r + exposure, g + exposure, b + exposure];
-
-        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        const adj = curveMap[Math.max(0, Math.min(255, Math.round(lum)))];
-        const scale = adj / (lum + 1);
-
-        data[i] = Math.min(255, Math.max(0, r * scale));
-        data[i + 1] = Math.min(255, Math.max(0, g * scale));
-        data[i + 2] = Math.min(255, Math.max(0, b * scale));
-      }
-
-      const output = new ImageData(data, originalImage.width, originalImage.height);
-      ctx.putImageData(output, 0, 0);
-    }
+    r = Math.min(255, Math.max(0, r));
+    g = Math.min(255, Math.max(0, g));
+    b = Math.min(255, Math.max(0, b));
   </script>
 </body>
 </html>
