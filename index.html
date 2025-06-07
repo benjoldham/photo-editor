@@ -163,6 +163,15 @@ let image = new Image();
       const reader = new FileReader();
       reader.onload = function (event) {
         fullResImage = new Image();
+        fullResImage.onload = function () {
+          const scale = 300 / fullResImage.width;
+          canvas.width = 300;
+          canvas.height = fullResImage.height * scale;
+          ctx.drawImage(fullResImage, 0, 0, canvas.width, canvas.height);
+          originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          drawCurve();
+          applyEdits();
+        };
         fullResImage.src = event.target.result;
         image.src = event.target.result;
       };
