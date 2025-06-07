@@ -1,126 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simple Photo Editor</title>
-  <title>Photo Editor</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    #controls { margin-top: 10px; }
-    label { display: block; margin-top: 10px; }
-    canvas { display: block; margin-top: 20px; max-width: 100%; height: auto; }
-    #controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-    label { display: flex; flex-direction: column; font-size: 12px; }
-    canvas { display: block; margin-top: 20px; max-width: 100%; height: auto; border: 1px solid #ccc; }
-    #crop-container { margin-top: 20px; display: none; }
-    #crop-container img { max-width: 100%; }
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .controls input[type=range] {
+      width: 100%;
+    }
+    .control-group {
+      margin-bottom: 10px;
+    }
+    .buttons button {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
-  <h1>Photo Editor</h1>
-  <input type="file" id="upload" accept="image/*">
-  <div id="controls" hidden>
-    <label>
-      Brightness
-      <input type="range" id="brightness" min="0" max="200" value="100">
-    </label>
-    <label>
-      Contrast
-      <input type="range" id="contrast" min="0" max="200" value="100">
-    </label>
-    <button id="download">Download Image</button>
-    <label>Brightness<input type="range" id="brightness" min="-100" max="100" value="0"></label>
-    <label>Contrast<input type="range" id="contrast" min="-100" max="100" value="0"></label>
-    <label>Exposure<input type="range" id="exposure" min="-100" max="100" value="0"></label>
-    <label>Temperature<input type="range" id="temperature" min="-100" max="100" value="0"></label>
-    <label>Tint<input type="range" id="tint" min="-100" max="100" value="0"></label>
-    <label>Clarity<input type="range" id="clarity" min="0" max="100" value="0"></label>
-    <label>Sharpen<input type="range" id="sharpen" min="0" max="100" value="0"></label>
-    <label>Highlights<input type="range" id="highlights" min="-100" max="100" value="0"></label>
-    <label>Shadows<input type="range" id="shadows" min="-100" max="100" value="0"></label>
-    <label>Blacks<input type="range" id="blacks" min="-100" max="100" value="0"></label>
-    <label>Whites<input type="range" id="whites" min="-100" max="100" value="0"></label>
-    <label>Vibrance<input type="range" id="vibrance" min="-100" max="100" value="0"></label>
-    <label>Hue<input type="range" id="hue" min="-180" max="180" value="0"></label>
-    <label>Saturation<input type="range" id="saturation" min="-100" max="100" value="0"></label>
-    <label>Lightness<input type="range" id="lightness" min="-100" max="100" value="0"></label>
-    <label>Dehaze<input type="range" id="dehaze" min="0" max="100" value="0"></label>
-    <label>Grain<input type="range" id="grain" min="0" max="100" value="0"></label>
-    <label>Vignette<input type="range" id="vignette" min="0" max="100" value="0"></label>
-    <button id="beforeAfter">Before/After</button>
-    <button id="undo">Undo</button>
-    <button id="redo">Redo</button>
-    <button id="cropBtn">Crop</button>
-    <button id="applyCrop" hidden>Apply Crop</button>
-    <button id="rotateLeft">Rotate L</button>
-    <button id="rotateRight">Rotate R</button>
-    <button id="flipH">Flip H</button>
-    <button id="flipV">Flip V</button>
-  </div>
+  <h1>Simple Photo Editor</h1>
+  <input type="file" id="upload" accept="image/*" />
   <canvas id="canvas"></canvas>
 
+  <div class="controls">
+    <div class="control-group">
+      <label>Brightness</label>
+      <input type="range" id="brightness" min="-100" max="100" value="0" />
+    </div>
+    <div class="control-group">
+      <label>Contrast</label>
+      <input type="range" id="contrast" min="-100" max="100" value="0" />
+    </div>
+    <div class="control-group">
+      <label>Exposure</label>
+      <input type="range" id="exposure" min="-100" max="100" value="0" />
+    </div>
+    <!-- Add more controls similarly -->
+  </div>
+
+  <div class="buttons">
+    <button onclick="resetEdits()">Reset</button>
+    <button onclick="exportImage('jpeg')">Export JPEG</button>
+    <button onclick="exportImage('png')">Export PNG</button>
+    <button onclick="toggleBeforeAfter()">Before/After</button>
+  </div>
+
   <script>
-    const upload = document.getElementById('upload');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const brightnessInput = document.getElementById('brightness');
-    const contrastInput = document.getElementById('contrast');
-    const controls = document.getElementById('controls');
-    const downloadBtn = document.getElementById('download');
-    let img = new Image();
+    const upload = document.getElementById('upload');
+    let originalImage = null;
+    let image = new Image();
 
-    function updateCanvas() {
-      const brightness = brightnessInput.value;
-      const contrast = contrastInput.value;
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-      ctx.drawImage(img, 0, 0);
-    }
-
-    upload.addEventListener('change', e => {
+    upload.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = e => {
-        img.onload = () => {
-          controls.hidden = false;
-          brightnessInput.value = 100;
-          contrastInput.value = 100;
-          updateCanvas();
-        };
-        img.src = e.target.result;
+      reader.onload = function (event) {
+        image.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
 
-    brightnessInput.addEventListener('input', updateCanvas);
-    contrastInput.addEventListener('input', updateCanvas);
+    image.onload = function () {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      ctx.drawImage(image, 0, 0);
+      originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    };
 
-    downloadBtn.addEventListener('click', () => {
+    function resetEdits() {
+      if (originalImage) ctx.putImageData(originalImage, 0, 0);
+    }
+
+    function toggleBeforeAfter() {
+      if (originalImage) {
+        const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(originalImage, 0, 0);
+        originalImage = current;
+      }
+    }
+
+    function exportImage(type) {
       const link = document.createElement('a');
-      link.download = 'edited-image.png';
-      link.href = canvas.toDataURL('image/png');
+      link.download = `edited-image.${type}`;
+      link.href = canvas.toDataURL(`image/${type}`);
       link.click();
-    });
+    }
+
+    // Sample adjustment (brightness)
+    document.getElementById('brightness').addEventListener('input', applyEdits);
+    document.getElementById('contrast').addEventListener('input', applyEdits);
+    document.getElementById('exposure').addEventListener('input', applyEdits);
+
+    function applyEdits() {
+      if (!originalImage) return;
+      const brightness = parseInt(document.getElementById('brightness').value);
+      const contrast = parseInt(document.getElementById('contrast').value);
+      const exposure = parseInt(document.getElementById('exposure').value);
+
+      const imageData = new ImageData(new Uint8ClampedArray(originalImage.data), originalImage.width, originalImage.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        for (let j = 0; j < 3; j++) {
+          let val = data[i + j];
+          val = val + brightness;
+          val = (val - 128) * (contrast / 100 + 1) + 128;
+          val += exposure;
+          data[i + j] = Math.min(255, Math.max(0, val));
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
   </script>
-  <div id="crop-container">
-    <img id="cropper-image" />
-  </div>
-  <div style="margin-top:10px;">
-    <label>Format
-      <select id="format">
-        <option value="png">PNG</option>
-        <option value="jpeg">JPEG</option>
-        <option value="webp">WebP</option>
-      </select>
-    </label>
-    <label>Resolution (%)<input type="range" id="resolution" min="10" max="100" value="100"></label>
-    <button id="download">Download</button>
-  </div>
-  <script src="https://unpkg.com/caman@4.1.2/dist/caman.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
