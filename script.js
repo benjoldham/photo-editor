@@ -249,38 +249,6 @@
       debounceTimer = setTimeout(applyEdits, 50);
     }
 
-const slider = document.getElementById('vignetteSlider');
-
-// Assume you have your image already drawn on the canvas.
-
-slider.addEventListener('input', () => {
-  applyVignette(canvas, parseFloat(slider.value));
-});
-
-function applyVignette(canvas, intensity = 0.5) {
-  const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
-
-  ctx.globalCompositeOperation = 'source-over';
-
-  // Clear and redraw your original image here if needed
-  // ctx.clearRect(0, 0, width, height);
-  // ctx.drawImage(yourImage, 0, 0, width, height);
-
-  const gradient = ctx.createRadialGradient(
-    width / 2, height / 2, Math.min(width, height) / 2 * (1 - intensity),
-    width / 2, height / 2, Math.min(width, height) / 2
-  );
-
-  gradient.addColorStop(0, 'rgba(0,0,0,0)');
-  gradient.addColorStop(1, 'rgba(0,0,0,0.8)');
-
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-}
-
-
     // Attach input listeners
     [
       "brightness",
