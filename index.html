@@ -177,18 +177,19 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function (event) {
-        image = new Image();
-        image.onload = function () {
-          const scale = 300 / image.width;
-          canvas.width = 300;
-          canvas.height = image.height * scale;
-          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          originalImage = new ImageData(new Uint8ClampedArray(imgData.data), imgData.width, imgData.height);
+        const img = new Image();
+        img.onload = function () {
+          const maxWidth = 300;
+          const scale = maxWidth / img.width;
+          canvas.width = maxWidth;
+          canvas.height = img.height * scale;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
           saveHistory();
           applyEdits();
         };
-        image.src = event.target.result;
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
