@@ -71,27 +71,38 @@
   </div>
 
   <script>
-    // ADD THIS to input bindings
+    function debounceApplyEdits() {
+      clearTimeout(window.debounceTimer);
+      window.debounceTimer = setTimeout(() => {
+        applyEdits();
+      }, 50);
+    }
+
     [
       'brightness', 'contrast', 'exposure',
       'highlights', 'shadows', 'whites', 'blacks', 'vibrance'
     ].forEach(id => document.getElementById(id).addEventListener('input', debounceApplyEdits));
 
-    // INSIDE applyEdits() and exportImage(), after exposure:
-    const vibrance = +document.getElementById('vibrance').value;
+    function applyEdits() {
+      const vibrance = +document.getElementById('vibrance').value;
 
-    // THEN add this after RGB adjustments
-    const intensity = (r + g + b) / 3;
-    const maxColor = Math.max(r, g, b);
-    const vibranceFactor = (maxColor - intensity) / 255;
-    const vibranceBoost = vibrance * vibranceFactor / 100;
-    r += (r - intensity) * vibranceBoost;
-    g += (g - intensity) * vibranceBoost;
-    b += (b - intensity) * vibranceBoost;
+      let r = 120, g = 100, b = 90; // placeholder values, replace with actual pixel values
 
-    r = Math.min(255, Math.max(0, r));
-    g = Math.min(255, Math.max(0, g));
-    b = Math.min(255, Math.max(0, b));
+      const intensity = (r + g + b) / 3;
+      const maxColor = Math.max(r, g, b);
+      const vibranceFactor = (maxColor - intensity) / 255;
+      const vibranceBoost = vibrance * vibranceFactor / 100;
+
+      r += (r - intensity) * vibranceBoost;
+      g += (g - intensity) * vibranceBoost;
+      b += (b - intensity) * vibranceBoost;
+
+      r = Math.min(255, Math.max(0, r));
+      g = Math.min(255, Math.max(0, g));
+      b = Math.min(255, Math.max(0, b));
+
+      console.log('Adjusted RGB:', r, g, b);
+    }
   </script>
 </body>
 </html>
