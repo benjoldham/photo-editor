@@ -249,21 +249,6 @@
       debounceTimer = setTimeout(applyEdits, 50);
     }
 
-    // Attach input listeners
-    [
-      "brightness",
-      "contrast",
-      "exposure",
-      "highlights",
-      "shadows",
-      "whites",
-      "blacks",
-      "vibrance",
-      "saturation",
-    ].forEach((id) =>
-      document.getElementById(id).addEventListener("input", debounceApplyEdits)
-    );
-
 const slider = document.getElementById('vignetteSlider');
 const ctx = canvas.getContext('2d');
 
@@ -295,3 +280,20 @@ function applyVignette(canvas, intensity = 0.5) {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 }
+
+
+    // Attach input listeners
+    [
+      "brightness",
+      "contrast",
+      "exposure",
+      "highlights",
+      "shadows",
+      "whites",
+      "blacks",
+      "vibrance",
+      "saturation",
+    ].forEach((id) =>
+      document.getElementById(id).addEventListener("input", debounceApplyEdits)
+    );
+
