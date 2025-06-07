@@ -250,7 +250,6 @@
     }
 
 const slider = document.getElementById('vignetteSlider');
-const ctx = canvas.getContext('2d');
 
 // Assume you have your image already drawn on the canvas.
 
