@@ -3,11 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <title>Simple Photo Editor</title>
+  <title>Photo Editor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     #controls { margin-top: 10px; }
     label { display: block; margin-top: 10px; }
     canvas { display: block; margin-top: 20px; max-width: 100%; height: auto; }
+    #controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    label { display: flex; flex-direction: column; font-size: 12px; }
+    canvas { display: block; margin-top: 20px; max-width: 100%; height: auto; border: 1px solid #ccc; }
+    #crop-container { margin-top: 20px; display: none; }
+    #crop-container img { max-width: 100%; }
   </style>
 </head>
 <body>
@@ -23,6 +30,33 @@
       <input type="range" id="contrast" min="0" max="200" value="100">
     </label>
     <button id="download">Download Image</button>
+    <label>Brightness<input type="range" id="brightness" min="-100" max="100" value="0"></label>
+    <label>Contrast<input type="range" id="contrast" min="-100" max="100" value="0"></label>
+    <label>Exposure<input type="range" id="exposure" min="-100" max="100" value="0"></label>
+    <label>Temperature<input type="range" id="temperature" min="-100" max="100" value="0"></label>
+    <label>Tint<input type="range" id="tint" min="-100" max="100" value="0"></label>
+    <label>Clarity<input type="range" id="clarity" min="0" max="100" value="0"></label>
+    <label>Sharpen<input type="range" id="sharpen" min="0" max="100" value="0"></label>
+    <label>Highlights<input type="range" id="highlights" min="-100" max="100" value="0"></label>
+    <label>Shadows<input type="range" id="shadows" min="-100" max="100" value="0"></label>
+    <label>Blacks<input type="range" id="blacks" min="-100" max="100" value="0"></label>
+    <label>Whites<input type="range" id="whites" min="-100" max="100" value="0"></label>
+    <label>Vibrance<input type="range" id="vibrance" min="-100" max="100" value="0"></label>
+    <label>Hue<input type="range" id="hue" min="-180" max="180" value="0"></label>
+    <label>Saturation<input type="range" id="saturation" min="-100" max="100" value="0"></label>
+    <label>Lightness<input type="range" id="lightness" min="-100" max="100" value="0"></label>
+    <label>Dehaze<input type="range" id="dehaze" min="0" max="100" value="0"></label>
+    <label>Grain<input type="range" id="grain" min="0" max="100" value="0"></label>
+    <label>Vignette<input type="range" id="vignette" min="0" max="100" value="0"></label>
+    <button id="beforeAfter">Before/After</button>
+    <button id="undo">Undo</button>
+    <button id="redo">Redo</button>
+    <button id="cropBtn">Crop</button>
+    <button id="applyCrop" hidden>Apply Crop</button>
+    <button id="rotateLeft">Rotate L</button>
+    <button id="rotateRight">Rotate R</button>
+    <button id="flipH">Flip H</button>
+    <button id="flipV">Flip V</button>
   </div>
   <canvas id="canvas"></canvas>
 
@@ -71,5 +105,22 @@
       link.click();
     });
   </script>
+  <div id="crop-container">
+    <img id="cropper-image" />
+  </div>
+  <div style="margin-top:10px;">
+    <label>Format
+      <select id="format">
+        <option value="png">PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WebP</option>
+      </select>
+    </label>
+    <label>Resolution (%)<input type="range" id="resolution" min="10" max="100" value="100"></label>
+    <button id="download">Download</button>
+  </div>
+  <script src="https://unpkg.com/caman@4.1.2/dist/caman.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
