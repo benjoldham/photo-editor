@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Photo Editor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #controls { margin-top: 10px; }
+    label { display: block; margin-top: 10px; }
+    canvas { display: block; margin-top: 20px; max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <h1>Photo Editor</h1>
+  <input type="file" id="upload" accept="image/*">
+  <div id="controls" hidden>
+    <label>
+      Brightness
+      <input type="range" id="brightness" min="0" max="200" value="100">
+    </label>
+    <label>
+      Contrast
+      <input type="range" id="contrast" min="0" max="200" value="100">
+    </label>
+    <button id="download">Download Image</button>
+  </div>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const upload = document.getElementById('upload');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const brightnessInput = document.getElementById('brightness');
+    const contrastInput = document.getElementById('contrast');
+    const controls = document.getElementById('controls');
+    const downloadBtn = document.getElementById('download');
+    let img = new Image();
+
+    function updateCanvas() {
+      const brightness = brightnessInput.value;
+      const contrast = contrastInput.value;
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
+      ctx.drawImage(img, 0, 0);
+    }
+
+    upload.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        img.onload = () => {
+          controls.hidden = false;
+          brightnessInput.value = 100;
+          contrastInput.value = 100;
+          updateCanvas();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    brightnessInput.addEventListener('input', updateCanvas);
+    contrastInput.addEventListener('input', updateCanvas);
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'edited-image.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html>
