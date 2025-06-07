@@ -23,6 +23,14 @@
     .buttons button {
       margin-right: 5px;
     }
+    .tone-curve {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 10px;
+    }
+    .tone-curve label {
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -43,7 +51,14 @@
       <label>Exposure</label>
       <input type="range" id="exposure" min="-100" max="100" value="0" />
     </div>
-    <!-- Add more controls similarly -->
+    <div class="tone-curve">
+      <label>Red Curve</label>
+      <input type="range" id="curveR" min="-100" max="100" value="0">
+      <label>Green Curve</label>
+      <input type="range" id="curveG" min="-100" max="100" value="0">
+      <label>Blue Curve</label>
+      <input type="range" id="curveB" min="-100" max="100" value="0">
+    </div>
   </div>
 
   <div class="buttons">
@@ -96,29 +111,41 @@
       link.click();
     }
 
-    // Sample adjustment (brightness)
     document.getElementById('brightness').addEventListener('input', applyEdits);
     document.getElementById('contrast').addEventListener('input', applyEdits);
     document.getElementById('exposure').addEventListener('input', applyEdits);
+    document.getElementById('curveR').addEventListener('input', applyEdits);
+    document.getElementById('curveG').addEventListener('input', applyEdits);
+    document.getElementById('curveB').addEventListener('input', applyEdits);
 
     function applyEdits() {
       if (!originalImage) return;
       const brightness = parseInt(document.getElementById('brightness').value);
       const contrast = parseInt(document.getElementById('contrast').value);
       const exposure = parseInt(document.getElementById('exposure').value);
+      const curveR = parseInt(document.getElementById('curveR').value);
+      const curveG = parseInt(document.getElementById('curveG').value);
+      const curveB = parseInt(document.getElementById('curveB').value);
 
       const imageData = new ImageData(new Uint8ClampedArray(originalImage.data), originalImage.width, originalImage.height);
       const data = imageData.data;
 
       for (let i = 0; i < data.length; i += 4) {
+        // Brightness, contrast, exposure adjustments
         for (let j = 0; j < 3; j++) {
           let val = data[i + j];
           val = val + brightness;
           val = (val - 128) * (contrast / 100 + 1) + 128;
           val += exposure;
-          data[i + j] = Math.min(255, Math.max(0, val));
+          data[i + j] = val;
         }
+
+        // Tone curve adjustments
+        data[i + 0] = Math.min(255, Math.max(0, data[i + 0] + curveR));
+        data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + curveG));
+        data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + curveB));
       }
+
       ctx.putImageData(imageData, 0, 0);
     }
   </script>
