@@ -263,3 +263,54 @@
     ].forEach((id) =>
       document.getElementById(id).addEventListener("input", debounceApplyEdits)
     );
+
+const canvas = document.getElementById('myCanvas');
+const slider = document.getElementById('vignetteSlider');
+
+// Load initial image
+const img = new Image();
+img.src = 'your-image.jpg'; // Replace with your image path
+img.onload = () => {
+  updateCanvas(slider.value);
+};
+
+// Redraw canvas when slider changes
+slider.addEventListener('input', (event) => {
+  updateCanvas(event.target.value);
+});
+
+function updateCanvas(intensity) {
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Clear canvas and draw the original image
+  ctx.clearRect(0, 0, width, height);
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // Apply vignette effect
+  applyVignette(canvas, intensity);
+}
+
+function applyVignette(canvas, intensity = 0.5) {
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  const gradient = ctx.createRadialGradient(
+    width / 2,
+    height / 2,
+    Math.min(width, height) / 2 * (1 - intensity),
+    width / 2,
+    height / 2,
+    Math.min(width, height) / 2
+  );
+
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0.8)');
+
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+}
+
