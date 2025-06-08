@@ -17,6 +17,16 @@
       max-width: 300px;
       height: auto;
     }
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+    }
+    #cropOverlay {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+    }
     .controls input[type=range] {
       width: 100%;
     }
@@ -47,7 +57,10 @@
 <body>
   <h1>Simple Photo Editor</h1>
   <input type="file" id="upload" accept="image/*" />
-  <canvas id="canvas"></canvas>
+  <div class="canvas-container">
+    <canvas id="canvas"></canvas>
+    <canvas id="cropOverlay"></canvas>
+  </div>
   <input type="range" id="vignetteSlider" min="0" max="1" step="0.01" value="0.5">
   <div class="controls">
     <div class="control-group">
