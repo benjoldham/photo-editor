@@ -6,6 +6,10 @@
     let historyIndex = -1;
     let image = new Image();
 
+    // Cropping state
+    let croppingMode = false;
+    let cropStart = null;
+
     const curveCanvas = document.getElementById("curveCanvas");
     const curveCtx = curveCanvas.getContext("2d");
     const curvePoints = Array.from({ length: 5 }, (_, i) => [i * 64, 256 - i * 64]);
@@ -133,6 +137,53 @@
       link.href = canvas.toDataURL(`image/${type}`);
       link.click();
     }
+
+// Enable cropping mode
+    function startCrop() {
+      croppingMode = true;
+    }
+
+    function cropImage(x1, y1, x2, y2) {
+      if (!originalImage) return;
+      const left = Math.min(x1, x2);
+      const top = Math.min(y1, y2);
+      const width = Math.abs(x2 - x1);
+      const height = Math.abs(y2 - y1);
+      if (width === 0 || height === 0) return;
+
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = originalImage.width;
+      tempCanvas.height = originalImage.height;
+      const tempCtx = tempCanvas.getContext("2d");
+      tempCtx.putImageData(originalImage, 0, 0);
+      const cropped = tempCtx.getImageData(left, top, width, height);
+
+      canvas.width = width;
+      canvas.height = height;
+      originalImage = new ImageData(new Uint8ClampedArray(cropped.data), width, height);
+      applyEdits();
+      saveHistory();
+    }
+
+    canvas.addEventListener("mousedown", (e) => {
+      if (!croppingMode) return;
+      const rect = canvas.getBoundingClientRect();
+      cropStart = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+    });
+
+    canvas.addEventListener("mouseup", (e) => {
+      if (!croppingMode || !cropStart) return;
+      const rect = canvas.getBoundingClientRect();
+      const endX = e.clientX - rect.left;
+      const endY = e.clientY - rect.top;
+      cropImage(cropStart.x, cropStart.y, endX, endY);
+      cropStart = null;
+      croppingMode = false;
+    });
+
 
     function applyEdits() {
       if (!originalImage) return;
