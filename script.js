@@ -4,6 +4,7 @@
     const overlayCtx = overlay.getContext("2d");
     const upload = document.getElementById("upload");
     let originalImage = null;
+    let fullImage = null; // Keep the un-cropped source so crop can be adjusted
     let history = [];
     let historyIndex = -1;
     let image = new Image();
@@ -91,6 +92,7 @@
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          fullImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
           saveHistory();
           applyEdits();
         };
@@ -142,10 +144,11 @@
       link.click();
     }
 
-    // Enable cropping mode
+// Enable cropping mode
     function startCrop() {
       croppingMode = true;
       overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+      drawCropOverlay(0, 0, canvas.width, canvas.height);
     }
 
     function drawCropOverlay(x1, y1, x2, y2) {
@@ -196,7 +199,7 @@
     }
 
     function cropImage(x1, y1, x2, y2) {
-      if (!originalImage) return;
+      if (!fullImage) return;
       const left = Math.min(x1, x2);
       const top = Math.min(y1, y2);
       const width = Math.abs(x2 - x1);
@@ -204,10 +207,10 @@
       if (width === 0 || height === 0) return;
 
       const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = originalImage.width;
-      tempCanvas.height = originalImage.height;
+      tempCanvas.width = fullImage.width;
+      tempCanvas.height = fullImage.height;
       const tempCtx = tempCanvas.getContext("2d");
-      tempCtx.putImageData(originalImage, 0, 0);
+      tempCtx.putImageData(fullImage, 0, 0);
       const cropped = tempCtx.getImageData(left, top, width, height);
 
       canvas.width = width;
@@ -215,6 +218,17 @@
       overlay.width = width;
       overlay.height = height;
       originalImage = new ImageData(new Uint8ClampedArray(cropped.data), width, height);
+      applyEdits();
+      saveHistory();
+    }
+
+    function resetCrop() {
+      if (!fullImage) return;
+      originalImage = new ImageData(new Uint8ClampedArray(fullImage.data), fullImage.width, fullImage.height);
+      canvas.width = fullImage.width;
+      canvas.height = fullImage.height;
+      overlay.width = fullImage.width;
+      overlay.height = fullImage.height;
       applyEdits();
       saveHistory();
     }
