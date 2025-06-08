@@ -17,6 +17,26 @@
       max-width: 300px;
       height: auto;
     }
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+    }
+    #cropOverlay {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+    }
+    .editor {
+      display: flex;
+    }
+    .left-pane,
+    .right-pane {
+      width: 50%;
+    }
+    .right-pane {
+      padding-left: 20px;
+    }
     .controls input[type=range] {
       width: 100%;
     }
@@ -47,9 +67,16 @@
 <body>
   <h1>Simple Photo Editor</h1>
   <input type="file" id="upload" accept="image/*" />
-  <canvas id="canvas"></canvas>
-  <input type="range" id="vignetteSlider" min="0" max="1" step="0.01" value="0.5">
-  <div class="controls">
+  <div class="editor">
+    <div class="left-pane">
+      <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+        <canvas id="cropOverlay"></canvas>
+      </div>
+    </div>
+    <div class="right-pane">
+      <input type="range" id="vignetteSlider" min="0" max="1" step="0.01" value="0.5">
+      <div class="controls">
     <div class="control-group">
       <label>Brightness</label>
       <input type="range" id="brightness" min="-100" max="100" value="0" />
@@ -90,15 +117,19 @@
       <label>Tone Curve (Luminance)</label>
       <canvas id="curveCanvas" width="256" height="256"></canvas>
     </div>
+      </div>
+    </div>
   </div>
 
   <div class="buttons">
-    <button onclick="undoEdit()">Undo</button>
-    <button onclick="redoEdit()">Redo</button>
-    <button onclick="resetEdits()">Reset</button>
-    <button onclick="exportImage('jpeg')">Export JPEG</button>
-    <button onclick="exportImage('png')">Export PNG</button>
-    <button onclick="toggleBeforeAfter()">Before/After</button>
-  </div>
+      <button onclick="undoEdit()">Undo</button>
+      <button onclick="redoEdit()">Redo</button>
+      <button onclick="resetEdits()">Reset</button>
+      <button onclick="startCrop()">Crop</button>
+      <button onclick="resetCrop()">Reset Crop</button>
+      <button onclick="exportImage('jpeg')">Export JPEG</button>
+      <button onclick="exportImage('png')">Export PNG</button>
+      <button onclick="toggleBeforeAfter()">Before/After</button>
+    </div>
 </body>
 </html>
