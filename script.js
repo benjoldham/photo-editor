@@ -1,5 +1,7 @@
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
+    const overlay = document.getElementById("cropOverlay");
+    const overlayCtx = overlay.getContext("2d");
     const upload = document.getElementById("upload");
     let originalImage = null;
     let history = [];
@@ -84,6 +86,8 @@
           const scale = maxWidth / img.width;
           canvas.width = maxWidth;
           canvas.height = img.height * scale;
+          overlay.width = canvas.width;
+          overlay.height = canvas.height;
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -138,9 +142,57 @@
       link.click();
     }
 
-// Enable cropping mode
+    // Enable cropping mode
     function startCrop() {
       croppingMode = true;
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+    }
+
+    function drawCropOverlay(x1, y1, x2, y2) {
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+      const left = Math.min(x1, x2);
+      const top = Math.min(y1, y2);
+      const width = Math.abs(x2 - x1);
+      const height = Math.abs(y2 - y1);
+
+      overlayCtx.fillStyle = "rgba(0,0,0,0.5)";
+      overlayCtx.fillRect(0, 0, overlay.width, overlay.height);
+      overlayCtx.clearRect(left, top, width, height);
+
+      overlayCtx.strokeStyle = "#fff";
+      overlayCtx.lineWidth = 2;
+      overlayCtx.strokeRect(left, top, width, height);
+
+      overlayCtx.lineWidth = 1;
+      overlayCtx.beginPath();
+      overlayCtx.moveTo(left + width / 3, top);
+      overlayCtx.lineTo(left + width / 3, top + height);
+      overlayCtx.moveTo(left + (2 * width) / 3, top);
+      overlayCtx.lineTo(left + (2 * width) / 3, top + height);
+      overlayCtx.moveTo(left, top + height / 3);
+      overlayCtx.lineTo(left + width, top + height / 3);
+      overlayCtx.moveTo(left, top + (2 * height) / 3);
+      overlayCtx.lineTo(left + width, top + (2 * height) / 3);
+      overlayCtx.stroke();
+
+      const c = 10;
+      overlayCtx.beginPath();
+      overlayCtx.moveTo(left, top + c);
+      overlayCtx.lineTo(left, top);
+      overlayCtx.lineTo(left + c, top);
+
+      overlayCtx.moveTo(left + width - c, top);
+      overlayCtx.lineTo(left + width, top);
+      overlayCtx.lineTo(left + width, top + c);
+
+      overlayCtx.moveTo(left, top + height - c);
+      overlayCtx.lineTo(left, top + height);
+      overlayCtx.lineTo(left + c, top + height);
+
+      overlayCtx.moveTo(left + width - c, top + height);
+      overlayCtx.lineTo(left + width, top + height);
+      overlayCtx.lineTo(left + width, top + height - c);
+      overlayCtx.stroke();
     }
 
     function cropImage(x1, y1, x2, y2) {
@@ -160,6 +212,8 @@
 
       canvas.width = width;
       canvas.height = height;
+      overlay.width = width;
+      overlay.height = height;
       originalImage = new ImageData(new Uint8ClampedArray(cropped.data), width, height);
       applyEdits();
       saveHistory();
@@ -174,6 +228,14 @@
       };
     });
 
+    canvas.addEventListener("mousemove", (e) => {
+      if (!croppingMode || !cropStart) return;
+      const rect = canvas.getBoundingClientRect();
+      const curX = e.clientX - rect.left;
+      const curY = e.clientY - rect.top;
+      drawCropOverlay(cropStart.x, cropStart.y, curX, curY);
+    });
+
     canvas.addEventListener("mouseup", (e) => {
       if (!croppingMode || !cropStart) return;
       const rect = canvas.getBoundingClientRect();
@@ -182,6 +244,7 @@
       cropImage(cropStart.x, cropStart.y, endX, endY);
       cropStart = null;
       croppingMode = false;
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
     });
 
 
